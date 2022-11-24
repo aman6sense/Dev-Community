@@ -9,11 +9,19 @@ import { User, UserDocument } from './schema/user.schema';
 
 import { UserType } from './model/user.userType.enum';
 
+
+
+
+
+
 @Injectable()
 export class UserService {
   constructor(@InjectModel(User.name) private userModel: Model<UserDocument>) { }
 
   async create(createUserDto: CreateUserDto): Promise<any> {
+
+
+    
     const newUser = {
       name: createUserDto.name ? createUserDto.name : "",
       email: createUserDto.email ? createUserDto.email : "",

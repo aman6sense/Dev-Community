@@ -69,20 +69,31 @@ export class CommentService {
     page,
     count
   ) {
-    const aggregate = []
-    //Populate user from table
-    AggregateHelper.populateUser(aggregate)
-    //Populate post from table
-    AggregateHelper.populatePost(aggregate)
-    //Show total count
-    aggregate.push({ $count: 'count' })
-    const total = await this.commentsModel.aggregate(aggregate).exec()
-    aggregate.pop()
-    aggregate.push({ $skip: (page - 1) * count });
-    aggregate.push({ $limit: count * 1 });
-    const data = await this.commentsModel.aggregate(aggregate).exec()
 
-    return { data: data, count: total[0].count ? total[0].count : 0 };
+    if (user.userType == UserType.BACKEND || user.userType == UserType.FRONTEND || user.userType == UserType.SQA) {
+
+      const aggregate = []
+      //Populate user from table
+      AggregateHelper.populateUser(aggregate)
+      //Populate post from table
+      AggregateHelper.populatePost(aggregate)
+      //Show total count
+      aggregate.push({ $count: 'count' })
+      const total = await this.commentsModel.aggregate(aggregate).exec()
+      aggregate.pop()
+      aggregate.push({ $skip: (page - 1) * count });
+      aggregate.push({ $limit: count * 1 });
+      const data = await this.commentsModel.aggregate(aggregate).exec()
+
+      return { data: data, count: total[0].count ? total[0].count : 0 };
+
+
+    }
+    else {
+      throw new UnauthorizedException('User not permitted');
+
+    }
+
   }
 
 

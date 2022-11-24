@@ -1,6 +1,7 @@
 import { Injectable, Logger, UnauthorizedException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
-import { Model } from 'mongoose';
+import mongoose, { Model } from 'mongoose';
+import { ElasticSearchHelper, IndexNames } from 'src/helper/elastic.search.helper';
 import { UserType } from 'src/user/model/user.userType.enum';
 import { User } from 'src/user/schema/user.schema';
 import { UserService } from 'src/user/user.service';
@@ -18,18 +19,27 @@ export class SkillsService {
   ) { }
 
   async addSkills(addSkillsDto: AddSkillsDto, user: User) {
-    
-    if (user.userType == UserType.BACKEND || user.userType == UserType.FRONTEND || user.userType == UserType.SQA) {
-      this.logger.verbose(addSkillsDto);
 
-      const { developer, skills } = { ...addSkillsDto };
+    if (user.userType == UserType.BACKEND || user.userType == UserType.FRONTEND || user.userType == UserType.SQA) {
+
+      // this.logger.verbose(addSkillsDto);
+
+      const { user, skills } = { ...addSkillsDto };
 
       const newSkills = {
-        developer: addSkillsDto.developer ? addSkillsDto.developer : "",
+        user: new mongoose.Types.ObjectId(addSkillsDto.user),
         skills: addSkillsDto.skills ? addSkillsDto.skills : []
       }
 
-      const userSkills = await this.skillsModel.create(addSkillsDto);
+      const userSkills = await this.skillsModel.create(newSkills);
+
+
+      // push into ElasticSearch
+      if (userSkills) {
+        const skillsObj = userSkills.toObject();
+        const res = await ElasticSearchHelper.index(IndexNames.skills, skillsObj);
+        this.logger.log("insert elastic: ", res)
+      }
 
       return userSkills;
     }
@@ -49,6 +59,15 @@ export class SkillsService {
         { developer: devId },
         { $push: { skills: { $each: updateSkills.skills } } },
       );
+      console.log("updateUser: ", userSkills);
+
+
+      // update skills into ElasticSearch
+      if (userSkills) {
+        const skillsObj = userSkills.toObject();
+        const res = await ElasticSearchHelper.index(IndexNames.skills, skillsObj);
+        this.logger.log("update elastic: ", res);
+      }
 
       return userSkills;
     }
@@ -70,4 +89,12 @@ export class SkillsService {
 
     }
   }
+
+
+
+
+
+
+
+  
 }
