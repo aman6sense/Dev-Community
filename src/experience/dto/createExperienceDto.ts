@@ -5,7 +5,7 @@ import { IsNotEmpty } from 'class-validator';
 
 export class CreateExperienceDto {
   @IsNotEmpty({ message: 'Select a developer(User)' })
-  developer: mongoose.Types.ObjectId;
+  user: mongoose.Types.ObjectId;
 
   @IsNotEmpty({ message: 'Select company name' })
   CompanyName: string;

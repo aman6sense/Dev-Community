@@ -3,7 +3,7 @@ import mongoose from 'mongoose';
 
 export class CreatePostDto {
   @IsNotEmpty({ message: 'Who owner of this post?' })
-  userId: mongoose.Types.ObjectId;
+  user: mongoose.Types.ObjectId;
 
   @IsNotEmpty({ message: 'Set some titles' })
   title: string;

@@ -6,7 +6,7 @@ export type PostDocument = Post & Document;
 @Schema({timestamps:true})
 export class Post {
   @Prop({ type: mongoose.Types.ObjectId, required: [true, 'Select a user id'] })
-  userId: string;
+  user: string;
 
   @Prop({ type: String, required: [true, 'Set a post title'] })
   title: string;

@@ -5,10 +5,7 @@ export class updateUserDto {
   @IsNotEmpty({ message: "Name can't be empty" })
   readonly name: string;
 
-  @IsNotEmpty({ message: 'Please provide your password' })
-  readonly password: string;
-
-  @IsNotEmpty({ message: 'Please provide your password' })
+  @IsNotEmpty({ message: 'Please provide your UserType' })
   userType: UserType;
 
   refreshToken: string;

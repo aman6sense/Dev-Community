@@ -1,8 +1,9 @@
-import { Controller, Get, Post, Patch, Delete, Body,Param, UseGuards } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, Patch, Post, Query, UseGuards } from '@nestjs/common';
 import { AccessTokenGuard } from 'src/common/guards/accessToken.guard';
 import { GetUser } from 'src/decorators/getUser.decorator';
 import { User } from 'src/user/schema/user.schema';
 import { CreateExperienceDto } from './dto/createExperienceDto';
+import { SearchExperienceDto } from './dto/searchExperienceDto';
 import { UpdateExperienceDto } from './dto/updateExperienceDto';
 import { ExperienceService } from './experience.service';
 
@@ -21,24 +22,42 @@ import { ExperienceService } from './experience.service';
       return await this.ExperienceService.addExperience(createExperienceDto,user);
     }
 
-    @Get('/:devId')
+    @Get('/search')
+    async getExperienceFromElasticSearch(
+      @Query()query:SearchExperienceDto
+       ) {
+      return await this.ExperienceService.getExperienceFromElasticSearch(query);
+    }
+
+    @Get('/:userId')
     async getDeveloperExperienceById(
-      @Param('devId') devId: string,
+      @Param('userId') userId: string,
        @GetUser() user: User
        ) {
-      return await this.ExperienceService.getDeveloperExperienceById(devId,user);
+      return await this.ExperienceService.getDeveloperExperienceById(userId,user);
     }
 
 
-    @Patch('/:devId')
+    @Patch('/:userId')
     async updateDeveloperExperienceById(
-      @Param('devId') devId: string,
+      @Param('userId') userId: string,
       @Body() updateExperienceDto: UpdateExperienceDto
       , @GetUser() user: User
     ) {
       return await this.ExperienceService.updateDeveloperExperienceById(
-        devId,
+        userId,
         updateExperienceDto,
+        user
+      );
+    }
+    @Delete('/:userId')
+    async deleteExperienceWithExperienceId(
+      @Param('userId') userId: string,
+      @Body() updateExperienceDto: UpdateExperienceDto
+      , @GetUser() user: User
+    ) {
+      return await this.ExperienceService.deleteExperienceWithExperienceId(
+        userId,
         user
       );
     }

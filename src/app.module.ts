@@ -10,18 +10,6 @@ import { UserModule } from './user/user.module';
 
 @Module({
   imports: [
-
-
-
-
-
-
-
-
-
-
-
-
     UserModule,
     MongooseModule.forRoot(
       'mongodb+srv://restaurantreview:restaurantreview@cluster0.d0akukp.mongodb.net/?retryWrites=true&w=majority',

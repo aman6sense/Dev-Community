@@ -12,6 +12,7 @@ import { CreateUserDto } from 'src/user/dto/createUserDto';
 import { UserService } from 'src/user/user.service';
 import { AuthCredentialsDto } from './dto/authCredentialsDto';
 
+import { ElasticSearchHelper, IndexNames } from 'src/helper/elastic.search.helper';
 import { UserType } from 'src/user/model/user.userType.enum';
 
 @Injectable()
@@ -45,8 +46,18 @@ export class AuthService {
         : UserType.BACKEND,
 
     };
+    const user = await this.userService.create(createUserData);
+    const newUser = user.toObject();
 
-    const newUser = await this.userService.create(createUserData);
+    // push user into ElasticSearch
+    if (newUser) {
+
+      const res = await ElasticSearchHelper.index(IndexNames.users, newUser);
+      if (!res) {
+
+        this.logger.log("Error to push user into ElasticSearch!")
+      }
+    }
 
     const tokens = await this.getTokens(newUser._id, newUser.email);
 
@@ -73,7 +84,7 @@ export class AuthService {
 
       const tokens = await this.getTokens(existsUser._id, existsUser.email);
 
-      await this.updateRefreshToken(existsUser._id, tokens.refreshToken);
+      // await this.updateRefreshToken(existsUser._id, tokens.refreshToken);
 
       return {
         accessToken: tokens.accessToken,
@@ -85,9 +96,9 @@ export class AuthService {
     }
   }
 
-  async logout(userId: string) {
-    return this.userService.updateRefreshToken(userId, null);
-  }
+  // async logout(userId: string) {
+  //   return this.userService.updateRefreshToken(userId, null);
+  // }
 
 
 
@@ -157,8 +168,8 @@ export class AuthService {
     };
   }
 
-  async updateRefreshToken(userId: string, refreshToken: string) {
-    const hashedRefreshToken = await this.hashData(refreshToken);
-    await this.userService.updateRefreshToken(userId, hashedRefreshToken);
-  }
+  // async updateRefreshToken(userId: string, refreshToken: string) {
+  //   const hashedRefreshToken = await this.hashData(refreshToken);
+  //   await this.userService.updateRefreshToken(userId, hashedRefreshToken);
+  // }
 }

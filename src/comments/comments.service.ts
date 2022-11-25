@@ -2,10 +2,12 @@ import { Injectable, Logger, NotFoundException, UnauthorizedException } from '@n
 import { InjectModel } from '@nestjs/mongoose';
 import mongoose, { Model } from 'mongoose';
 import { AggregateHelper } from 'src/helper/AggregateHelper';
+import { ElasticSearchHelper, IndexNames } from 'src/helper/elastic.search.helper';
 import { PostService } from 'src/post/post.service';
 import { UserType } from 'src/user/model/user.userType.enum';
 import { User } from 'src/user/schema/user.schema';
 import { AddCommentDto } from './dto/addCommentDto';
+import { SearchCommentDto } from './dto/searchCommentDto';
 import { UpdateCommentDto } from './dto/updateCommentDto';
 import { Comments, CommentsDoc } from './schema/comments.schema';
 
@@ -24,16 +26,28 @@ export class CommentService {
     console.log("=========USER=======", user)
     if (user.userType == UserType.BACKEND || user.userType == UserType.FRONTEND || user.userType == UserType.SQA) {
 
-      const postExist = await this.postService.getPostById(addCommentDot?.postId?.toString());
+      const postExist = await this.postService.getPostById(addCommentDot?.post?.toString());
+
       if (!postExist) {
         throw new NotFoundException('post is not exist');
       } else {
+
         const newComment = {
-          post: new mongoose.Types.ObjectId(addCommentDot.postId),
+          post: new mongoose.Types.ObjectId(addCommentDot.post),
           comment: addCommentDot.comment ? addCommentDot.comment : "",
           user: new mongoose.Types.ObjectId(user._id)
         };
-        return await this.commentsModel.create(newComment);
+
+        const newData = await this.commentsModel.create(newComment);
+
+        // push into ElasticSearch
+        if (newComment) {
+
+          const commentObj = newData.toObject();
+          const res = await ElasticSearchHelper.index(IndexNames.comments, commentObj);
+        }
+
+        return newData;
       }
 
     } else {
@@ -50,12 +64,20 @@ export class CommentService {
         comment: updateCommentDto.comment ? updateCommentDto.comment : '',
       };
 
-      return await this.commentsModel.findByIdAndUpdate(
+      const updateData = await this.commentsModel.findByIdAndUpdate(
         id,
         updateComment,
         { new: true, }
 
       );
+      // push into ElasticSearch
+      if (updateData) {
+
+        const commentObj = updateData.toObject();
+        const res = await ElasticSearchHelper.index(IndexNames.comments, commentObj);
+      }
+
+      return updateData;
     }
 
     else {
@@ -96,5 +118,95 @@ export class CommentService {
 
   }
 
+  async getCommentsFromElasticSearch(query: SearchCommentDto) {
+
+    const pageSize = parseInt(query.pageSize ?? '200');
+    const current = parseInt(query.current ?? '1');
+    const searchFilters = {
+      query: {
+        bool: {
+          must: [],
+          filter: [],
+        },
+      },
+      size: pageSize,
+      from: ((current - 1) * pageSize) | 0,
+    };
+
+    if (query.search) {
+      let queryStr = ElasticSearchHelper.getFixedQueryString(query.search)
+      searchFilters.query.bool.must.push({
+        query_string: {
+          // query: `\"*${query?.search}*\"`,
+          query: queryStr,
+          fields: ['post', 'user', 'comment'],
+        },
+      });
+    }
+
+    delete query.search;
+    delete query.current;
+    delete query.search;
+    delete query.pageSize;
+
+    let queryString = '';
+    const queryKeys = Object.keys(query);
+    for (let i = 0; i < queryKeys.length; i++) {
+      const splittedParts = (
+        '"' +
+        query[queryKeys[i]].split(',').join('" , "') +
+        '"'
+      )
+        .split(',')
+        .join(' OR ');
+
+      queryString += `${queryKeys[i]}:(${splittedParts})`;
+
+      if (i < queryKeys.length - 1) {
+        queryString += ' AND ';
+      }
+    }
+
+    if (queryString != '') {
+
+      searchFilters.query.bool.must.push({
+        query_string: {
+          query: queryString,
+        },
+      });
+    }
+
+    const resp = await ElasticSearchHelper.search(
+      IndexNames.comments,
+      searchFilters,
+    );
+
+    const data = resp.body?.hits?.hits;
+    const count = resp.body?.hits?.total?.value ?? 0;
+    return {
+      data,
+      count,
+    };
+  }
+
+
+
+
+  async deleteCommentWithCommentId(id: string, user: User) {
+
+    if (user.userType == UserType.BACKEND || user.userType == UserType.FRONTEND || user.userType == UserType.SQA) {
+
+      const deleteComment = await this.commentsModel.findByIdAndDelete(id);
+
+      // Delete comment from ElasticSearch
+      const res = await ElasticSearchHelper.remove(deleteComment.id, IndexNames.comments);
+
+      return deleteComment;
+    }
+    else {
+      throw new UnauthorizedException('User not permitted');
+
+    }
+  }
 
 }

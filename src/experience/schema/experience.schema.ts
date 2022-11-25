@@ -9,7 +9,7 @@ export type ExperienceDoc = Experience & Document;
 export class Experience {
 
     @Prop({ type: mongoose.Types.ObjectId, ref: "User" })
-    developer: mongoose.Types.ObjectId;
+    user: mongoose.Types.ObjectId;
 
     @Prop({ type: String, required: [true, "Add company name"] })
     CompanyName: string;

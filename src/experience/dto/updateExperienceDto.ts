@@ -1,9 +1,7 @@
-import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
-import { Document } from 'mongoose';
-import mongoose from 'mongoose';
 import { IsNotEmpty } from 'class-validator';
 
 export class UpdateExperienceDto {
+  
   @IsNotEmpty({ message: 'Select company name' })
   CompanyName: string;
 

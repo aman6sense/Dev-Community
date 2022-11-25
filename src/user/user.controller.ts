@@ -1,7 +1,8 @@
 import {
-  Body, Controller, Delete, Get, Logger, Param, Patch, UseGuards
+  Body, Controller, Delete, Get, Logger, Param, Patch, Query, UseGuards
 } from '@nestjs/common';
 import { AccessTokenGuard } from 'src/common/guards/accessToken.guard';
+import { SearchUserDto } from './dto/searchUserDto';
 import { updateUserDto } from './dto/updateUserDto';
 import { UserService } from './user.service';
 
@@ -28,17 +29,32 @@ export class UserController {
     return this.userService.findAll();
   }
 
-  @Get(':id')
+  @Get("/search")
+  async getUsersFromElasticSearch(@Query() query: SearchUserDto) {
+
+    console.log("in search");
+
+
+    return await this.userService.getAllTheUserByElasticSearch(query)
+
+  }
+
+  @Get('/:id')
   findById(@Param('id') id: string) {
     return this.userService.findById(id);
   }
+
+
   @UseGuards(AccessTokenGuard)
-  @Patch(':id')
+  @Patch('/:id')
   update(@Param('id') id: string, @Body() updateUserDto: updateUserDto) {
     return this.userService.update(id, updateUserDto);
   }
+
+
+
   @UseGuards(AccessTokenGuard)
-  @Delete(':id')
+  @Delete('/:id')
   remove(@Param('id') id: string) {
     return this.userService.remove(id);
   }
