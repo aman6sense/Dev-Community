@@ -14,7 +14,7 @@ export class PostService {
   constructor(
     @InjectModel(Post.name) private postModel: Model<PostDocument>,
     private userService: UserService,
-  ) { }
+  ) {}
 
   async createPost(createPostDto: CreatePostDto) {
     const newPost = {
@@ -31,7 +31,7 @@ export class PostService {
       this.logger.verbose('isValid: ', isValidUser);
       throw new NotFoundException('You not a valid Developer');
     }
-
+    // check status
     return await this.postModel.create(newPost);
   }
 
@@ -53,29 +53,24 @@ export class PostService {
   }
 
   async getPostById(id: string) {
-
     // this.logger.verbose("id: ", id)
     return await this.postModel.findById(id);
   }
 
-
-
   async getAllPostedUsers(user: any, page: any, count: any) {
-
-    const aggregate = []
+    const aggregate = [];
     //Populate user from table
-    AggregateHelper.populateUser(aggregate)
+    AggregateHelper.populateUser(aggregate);
     //Populate post from table
-    AggregateHelper.populatePost(aggregate)
+    AggregateHelper.populatePost(aggregate);
     //Show total count
-    aggregate.push({ $count: 'count' })
-    const total = await this.postModel.aggregate(aggregate).exec()
-    aggregate.pop()
+    aggregate.push({ $count: 'count' });
+    const total = await this.postModel.aggregate(aggregate).exec();
+    aggregate.pop();
     aggregate.push({ $skip: (page - 1) * count });
     aggregate.push({ $limit: count * 1 });
-    const data = await this.postModel.aggregate(aggregate).exec()
+    const data = await this.postModel.aggregate(aggregate).exec();
 
     return { data: data, count: total[0].count ? total[0].count : 0 };
-
   }
 }
