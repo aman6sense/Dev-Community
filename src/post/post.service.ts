@@ -31,7 +31,6 @@ export class PostService {
       this.logger.verbose('isValid: ', isValidUser);
       throw new NotFoundException('You not a valid Developer');
     }
-    // check status
     return await this.postModel.create(newPost);
   }
 
