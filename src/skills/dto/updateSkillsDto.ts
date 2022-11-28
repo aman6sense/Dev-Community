@@ -1,20 +1,14 @@
-import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
-import { Document } from 'mongoose';
-import mongoose from 'mongoose';
 import { IsNotEmpty } from "class-validator";
+import mongoose from 'mongoose';
 
 
 
-export class UpdateSkillsDto{
-    
+export class UpdateSkillsDto {
+
     @IsNotEmpty({ message: "Select a Developer(User)" })
-    developer:mongoose.Types.ObjectId;
+    user: mongoose.Types.ObjectId;
 
 
     @IsNotEmpty({ message: "Please put your skills" })
-    skills:[string];
+    skills: string[];
 }
-
-
-
-

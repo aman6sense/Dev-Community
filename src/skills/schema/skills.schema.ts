@@ -12,7 +12,7 @@ export class Skills {
     user: mongoose.Types.ObjectId;
 
     @Prop({ type: [String], required: [true, "Add some skills"] })
-    skills: [string];
+    skills: string[];
 }
 
 export const SkillsSchema = SchemaFactory.createForClass(Skills);

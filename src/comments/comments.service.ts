@@ -1,11 +1,11 @@
 import { Injectable, Logger, NotFoundException, UnauthorizedException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import mongoose, { Model } from 'mongoose';
-import { AggregateHelper } from 'src/helper/AggregateHelper';
-import { ElasticSearchHelper, IndexNames } from 'src/helper/elastic.search.helper';
-import { PostService } from 'src/post/post.service';
-import { UserType } from 'src/user/model/user.userType.enum';
-import { User } from 'src/user/schema/user.schema';
+import { AggregateHelper } from '../helper/AggregateHelper';
+import { ElasticSearchHelper, IndexNames } from '../helper/elastic.search.helper';
+import { PostService } from '../post/post.service';
+import { UserType } from '../user/model/user.userType.enum';
+import { User } from '../user/schema/user.schema';
 import { AddCommentDto } from './dto/addCommentDto';
 import { SearchCommentDto } from './dto/searchCommentDto';
 import { UpdateCommentDto } from './dto/updateCommentDto';

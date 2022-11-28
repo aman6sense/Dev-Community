@@ -1,7 +1,7 @@
 import {
   Body, Controller, Delete, Get, Logger, Param, Patch, Query, UseGuards
 } from '@nestjs/common';
-import { AccessTokenGuard } from 'src/common/guards/accessToken.guard';
+import { AccessTokenGuard } from '../common/guards/accessToken.guard';
 import { SearchUserDto } from './dto/searchUserDto';
 import { updateUserDto } from './dto/updateUserDto';
 import { UserService } from './user.service';

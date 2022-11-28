@@ -1,15 +1,14 @@
 import { UpdatePostDto } from './dto/updatePostDto';
 
-import { Body, Controller, Delete, Get, Param, Patch, Post, Query, UseGuards } from '@nestjs/common';
-import { AccessTokenGuard } from 'src/common/guards/accessToken.guard';
-import { GetUser } from 'src/decorators/getUser.decorator';
-import { User } from 'src/user/schema/user.schema';
+import { Body, Controller, Delete, Get, Param, Patch, Post, Query } from '@nestjs/common';
+import { GetUser } from '../decorators/getUser.decorator';
+import { User } from '../user/schema/user.schema';
 import { CreatePostDto } from './dto/createPostDto';
 import { SearchPostDto } from './dto/searchPostDto';
 import { PostService } from './post.service';
 
 
-@UseGuards(AccessTokenGuard)
+// @UseGuards(AccessTokenGuard)
 @Controller('post')
 export class PostController {
   constructor(private postService: PostService) { }

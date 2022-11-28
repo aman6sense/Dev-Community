@@ -1,23 +1,23 @@
-import { MongooseModule } from '@nestjs/mongoose';
 import { Module } from '@nestjs/common';
-import { Comments, CommentsSchema } from './schema/comments.schema';
+import { MongooseModule } from '@nestjs/mongoose';
+import { PostService } from '../post/post.service';
+import { Post, PostSchema } from '../post/schema/post.schema';
+import { User, UserSchema } from '../user/schema/user.schema';
+import { UserService } from '../user/user.service';
 import { CommentsController } from './comments.controller';
 import { CommentService } from './comments.service';
-import { Post, PostSchema } from 'src/post/schema/post.schema';
-import { User, userSchema } from 'src/user/schema/user.schema';
-import { PostService } from 'src/post/post.service';
-import { UserService } from 'src/user/user.service';
+import { Comments, CommentsSchema } from './schema/comments.schema';
 
 @Module({
   imports: [
     MongooseModule.forFeature([
       { name: Comments.name, schema: CommentsSchema },
       { name: Post.name, schema: PostSchema },
-      { name: User.name, schema: userSchema },
+      { name: User.name, schema: UserSchema },
     ]),
   ],
   controllers: [CommentsController],
   providers: [CommentService, PostService, UserService],
   exports: [CommentService],
 })
-export class CommentsModule {}
+export class CommentsModule { }

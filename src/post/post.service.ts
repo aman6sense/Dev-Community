@@ -1,11 +1,11 @@
 import { Injectable, Logger, NotFoundException, UnauthorizedException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import mongoose, { Model } from 'mongoose';
-import { AggregateHelper } from 'src/helper/AggregateHelper';
-import { ElasticSearchHelper, IndexNames } from 'src/helper/elastic.search.helper';
-import { UserType } from 'src/user/model/user.userType.enum';
-import { User } from 'src/user/schema/user.schema';
-import { UserService } from 'src/user/user.service';
+import { AggregateHelper } from '../helper/AggregateHelper';
+import { ElasticSearchHelper, IndexNames } from '../helper/elastic.search.helper';
+import { UserType } from '../user/model/user.userType.enum';
+import { User } from '../user/schema/user.schema';
+import { UserService } from '../user/user.service';
 import { CreatePostDto } from './dto/createPostDto';
 import { SearchPostDto } from './dto/searchPostDto';
 import { UpdatePostDto } from './dto/updatePostDto';
@@ -21,20 +21,21 @@ export class PostService {
   ) { }
 
   async createPost(createPostDto: CreatePostDto) {
+
     const newPost = {
       user: new mongoose.Types.ObjectId(createPostDto.user),
       title: createPostDto.title,
       post: createPostDto.post,
     };
 
-    const isValidUser = await this.userService.findById(
-      newPost.user ? newPost.user : '',
-    );
+    // const isValidUser = await this.userService.findById(
+    //   newPost.user ? newPost.user : '',
+    // );
 
-    if (!isValidUser) {
-      this.logger.verbose('isValid: ', isValidUser);
-      throw new NotFoundException('You not a valid Developer');
-    }
+    // if (!isValidUser) {
+    //   this.logger.verbose('isValid: ', isValidUser);
+    //   throw new NotFoundException('You not a valid Developer');
+    // }
 
     const post = await this.postModel.create(newPost);
 

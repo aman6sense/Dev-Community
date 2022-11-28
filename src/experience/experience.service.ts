@@ -1,10 +1,10 @@
 import { Injectable, Logger, NotFoundException, UnauthorizedException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import mongoose, { Model } from 'mongoose';
-import { ElasticSearchHelper, IndexNames } from 'src/helper/elastic.search.helper';
-import { UserType } from 'src/user/model/user.userType.enum';
-import { User } from 'src/user/schema/user.schema';
-import { UserService } from 'src/user/user.service';
+import { ElasticSearchHelper, IndexNames } from '../helper/elastic.search.helper';
+import { UserType } from '../user/model/user.userType.enum';
+import { User } from '../user/schema/user.schema';
+import { UserService } from '../user/user.service';
 import { CreateExperienceDto } from './dto/createExperienceDto';
 import { SearchExperienceDto } from './dto/searchExperienceDto';
 import { UpdateExperienceDto } from './dto/updateExperienceDto';
@@ -130,7 +130,7 @@ export class ExperienceService {
 
     if (user.userType == UserType.BACKEND || user.userType == UserType.FRONTEND || user.userType == UserType.SQA) {
 
-      return await this.experienceModel.find({ user: new mongoose.Types.ObjectId(userId) });
+      return await this.experienceModel.findOne({ user: new mongoose.Types.ObjectId(userId) });
     }
     else {
       throw new UnauthorizedException('User not permitted');
@@ -143,8 +143,8 @@ export class ExperienceService {
 
     if (user.userType == UserType.BACKEND || user.userType == UserType.FRONTEND || user.userType == UserType.SQA) {
 
-      this.logger.log("id: ",id);
-      
+      this.logger.log("id: ", id);
+
       const deleteUser = await this.experienceModel.findByIdAndDelete(id);
 
       this.logger.log("deleteUser: ", deleteUser);

@@ -8,12 +8,12 @@ import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt';
 import jwt_decode from "jwt-decode";
-import { CreateUserDto } from 'src/user/dto/createUserDto';
-import { UserService } from 'src/user/user.service';
+import { CreateUserDto } from '../user/dto/createUserDto';
+import { UserService } from '../user/user.service';
 import { AuthCredentialsDto } from './dto/authCredentialsDto';
 
-import { ElasticSearchHelper, IndexNames } from 'src/helper/elastic.search.helper';
-import { UserType } from 'src/user/model/user.userType.enum';
+import { ElasticSearchHelper, IndexNames } from '../helper/elastic.search.helper';
+import { UserType } from '../user/model/user.userType.enum';
 
 @Injectable()
 export class AuthService {

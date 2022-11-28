@@ -3,7 +3,7 @@ import mongoose, { Document } from 'mongoose';
 
 export type PostDocument = Post & Document;
 
-@Schema({timestamps:true})
+@Schema({ timestamps: true })
 export class Post {
   @Prop({ type: mongoose.Types.ObjectId, required: [true, 'Select a user id'] })
   user: string;

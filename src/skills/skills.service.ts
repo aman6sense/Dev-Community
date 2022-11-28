@@ -1,10 +1,10 @@
 import { Injectable, Logger, UnauthorizedException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import mongoose, { Model } from 'mongoose';
-import { ElasticSearchHelper, IndexNames } from 'src/helper/elastic.search.helper';
-import { UserType } from 'src/user/model/user.userType.enum';
-import { User } from 'src/user/schema/user.schema';
-import { UserService } from 'src/user/user.service';
+import { ElasticSearchHelper, IndexNames } from '../helper/elastic.search.helper';
+import { UserType } from '../user/model/user.userType.enum';
+import { User } from '../user/schema/user.schema';
+import { UserService } from '../user/user.service';
 import { AddSkillsDto } from './dto/addSkillsDto';
 import { SearchSkillsDto } from './dto/searchSkillsDto';
 import { UpdateSkillsDto } from './dto/updateSkillsDto';
@@ -49,7 +49,7 @@ export class SkillsService {
     }
   }
 
-  async updateDeveloperSkillsById(devId: string, updateSkillsDto: UpdateSkillsDto, user: User) {
+  async updateDeveloperSkillsById(userId: string, updateSkillsDto: UpdateSkillsDto, user: User) {
     if (user.userType == UserType.BACKEND || user.userType == UserType.FRONTEND || user.userType == UserType.SQA) {
 
       const updateSkills = {
@@ -57,7 +57,7 @@ export class SkillsService {
       }
 
       const userSkills = await this.skillsModel.findOneAndUpdate(
-        { developer: devId },
+        { developer: userId },
         { $push: { skills: { $each: updateSkills.skills } } },
       );
       // console.log("updateUser: ", userSkills);
@@ -80,10 +80,10 @@ export class SkillsService {
   }
 
 
-  async getDeveloperSkillsById(devId: string, user: User) {
+  async getUserSkillsByUserId(userId: any, user: User) {
     if (user.userType == UserType.BACKEND || user.userType == UserType.FRONTEND || user.userType == UserType.SQA) {
 
-      return await this.skillsModel.find({ user: devId });
+      return await this.skillsModel.findOne({ user: userId });
     }
     else {
       throw new UnauthorizedException('User not permitted');

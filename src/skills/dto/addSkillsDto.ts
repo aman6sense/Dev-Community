@@ -10,5 +10,6 @@ export class AddSkillsDto {
 
 
     @IsNotEmpty({ message: "Please put your skills" })
-    skills: [string];
+    // skills: [string];
+    skills: string[];
 }

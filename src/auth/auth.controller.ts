@@ -2,10 +2,10 @@ import {
   Body,
   Controller, Logger, Post, UseGuards
 } from '@nestjs/common';
-import { RefreshTokenGuard } from 'src/common/guards/refreshToken.guard';
-import { GetUser } from 'src/decorators/getUser.decorator';
-import { CreateUserDto } from 'src/user/dto/createUserDto';
-import { User } from 'src/user/schema/user.schema';
+import { RefreshTokenGuard } from '../common/guards/refreshToken.guard';
+import { GetUser } from '../decorators/getUser.decorator';
+import { CreateUserDto } from '../user/dto/createUserDto';
+import { User } from '../user/schema/user.schema';
 import { AuthService } from './auth.service';
 import { AuthDto } from './dto/auth.dto';
 

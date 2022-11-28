@@ -1,14 +1,13 @@
-import { Body, Controller, Get, Param, Patch, Post, Query, UseGuards } from '@nestjs/common';
-import { AccessTokenGuard } from 'src/common/guards/accessToken.guard';
-import { GetUser } from 'src/decorators/getUser.decorator';
-import { User } from 'src/user/schema/user.schema';
+import { Body, Controller, Get, Param, Patch, Post, Query } from '@nestjs/common';
+import { GetUser } from '../decorators/getUser.decorator';
+import { User } from '../user/schema/user.schema';
 import { AddSkillsDto } from './dto/addSkillsDto';
 import { SearchSkillsDto } from './dto/searchSkillsDto';
 import { UpdateSkillsDto } from './dto/updateSkillsDto';
 import { SkillsService } from './skills.service';
 
 
-@UseGuards(AccessTokenGuard)
+// @UseGuards(AccessTokenGuard)
 @Controller('skills')
 export class SkillsController {
   constructor(private skillsService: SkillsService) { }
@@ -28,21 +27,22 @@ export class SkillsController {
 
   }
 
-  // @Get('/:devId')
-  // async getDeveloperSkillsById(
-  //   @Param('devId') devId: string,
-  //   @GetUser() user: User
-  // ) {
-  //   return await this.skillsService.getDeveloperSkillsById(devId, user);
-  // }
-  @Patch('/:devId')
+  @Get('/:userId')
+  async getDeveloperSkillsByUserId(
+    @Param('userId') userId: string,
+    @GetUser() user: User
+  ) {
+    return await this.skillsService.getUserSkillsByUserId(userId, user);
+  }
+
+  @Patch('/:userId')
   async updateDeveloperSkillsById(
-    @Param('devId') devId: string,
+    @Param('userId') userId: string,
     @Body() updateSkillsDto: UpdateSkillsDto,
     @GetUser() user: User
   ) {
     return await this.skillsService.updateDeveloperSkillsById(
-      devId,
+      userId,
       updateSkillsDto,
       user
     );

@@ -7,7 +7,8 @@ import { CreateUserDto } from './dto/createUserDto';
 import { updateUserDto } from './dto/updateUserDto';
 import { User, UserDocument } from './schema/user.schema';
 
-import { ElasticSearchHelper, IndexNames } from 'src/helper/elastic.search.helper';
+// import { ElasticSearchHelper, IndexNames } from '../helper/elastic.search.helper';
+import { ElasticSearchHelper, IndexNames } from '../helper/elastic.search.helper';
 import { SearchUserDto } from './dto/searchUserDto';
 import { UserType } from './model/user.userType.enum';
 
@@ -28,7 +29,7 @@ export class UserService {
     const createUserData = {
       name: createUserDto.name ? createUserDto.name : "",
       email: createUserDto.email ? createUserDto.email : "",
-      password: createUserDto.password?createUserDto.password:"",
+      password: createUserDto.password ? createUserDto.password : "",
       userType: createUserDto.userType
         ? createUserDto.userType
         : UserType.BACKEND,
