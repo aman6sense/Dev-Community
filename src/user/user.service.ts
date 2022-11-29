@@ -2,9 +2,9 @@ import {
   Injectable, Logger, NotFoundException
 } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
-import { Model } from 'mongoose';
+import mongoose, { Model } from 'mongoose';
 import { CreateUserDto } from './dto/createUserDto';
-import { updateUserDto } from './dto/updateUserDto';
+import { UpdateUserDto } from './dto/updateUserDto';
 import { User, UserDocument } from './schema/user.schema';
 
 // import { ElasticSearchHelper, IndexNames } from '../helper/elastic.search.helper';
@@ -23,10 +23,24 @@ export class UserService {
   constructor(@InjectModel(User.name) private userModel: Model<UserDocument>) { }
 
   async create(createUserDto: CreateUserDto): Promise<any> {
+    const user = await this.createNewUser(createUserDto);
+    const userObj = user.toObject();
+    delete userObj.password;
+    return userObj;
+  }
 
+  async createNewUser(createUserDto: CreateUserDto) {
+    const userData = this.createUserDtoImpl(createUserDto);
+    return await this.userModel.create(userData);
+  }
 
-
-    const createUserData = {
+  createUserDtoImpl(createUserDto: CreateUserDto): {
+    name: string;
+    email: string,
+    password: string,
+    userType: UserType
+  } {
+    return {
       name: createUserDto.name ? createUserDto.name : "",
       email: createUserDto.email ? createUserDto.email : "",
       password: createUserDto.password ? createUserDto.password : "",
@@ -34,13 +48,7 @@ export class UserService {
         ? createUserDto.userType
         : UserType.BACKEND,
 
-    };
-    const user = await this.userModel.create(createUserData);
-
-    // const userObj = user.toObject();
-    // delete userObj.password;
-
-    return user;
+    }
   }
 
   async findAll(): Promise<UserDocument[]> {
@@ -59,43 +67,53 @@ export class UserService {
   }
 
   async update(
-    id: string,
-    updateUserDto: updateUserDto,
+    userId: string,
+    updateUserDto: UpdateUserDto,
   ): Promise<UserDocument> {
-
-    const existUser = await this.findById(id);
-
+    const existUser = await this.findById(userId);
     if (!existUser) {
       throw new NotFoundException("User is not valid")
     }
-
-    const updateUser = {
-      name: updateUserDto.name ? updateUserDto.name : "",
-      userType: updateUserDto.userType ? updateUserDto.userType : existUser.userType,
-
-    }
-
-
-    const resUser = await this.userModel
-      .findByIdAndUpdate(id, updateUser, { new: true })
-      ;
+    const resUser = await this.updateExistingUser(userId, updateUserDto)
 
     // update user into ElasticSearch
-    if (resUser) {
-      const userObj = resUser.toObject();
-      const res = await ElasticSearchHelper.index(IndexNames.users, userObj);
+    // if (resUser) {
+    //   const userObj = resUser.toObject();
+    //   const res = await ElasticSearchHelper.index(IndexNames.users, userObj);
 
-      if (!res) {
-        this.logger.log("user are not update on ElasticSearch")
-      }
-      else {
-        // this.logger.log("update res: ", res)
-      }
-    }
-
+    //   if (!res) {
+    //     this.logger.log("user are not update on ElasticSearch")
+    //   }
+    //   else {
+    //     // this.logger.log("update res: ", res)
+    //   }
+    // }
     return resUser;
 
   }
+
+
+
+  async updateExistingUser(userId: string, updateUserDto: UpdateUserDto) {
+    const userData = this.updateUserDtoImpl(updateUserDto);
+    return await this.userModel
+      .findByIdAndUpdate(new mongoose.Types.ObjectId(userId), userData, { new: true })
+      ;
+  }
+
+  updateUserDtoImpl(updateUserDto: UpdateUserDto): {
+    name: string;
+    userType: UserType
+  } {
+    return {
+      name: updateUserDto.name ? updateUserDto.name : "",
+      userType: updateUserDto.userType
+        ? updateUserDto.userType
+        : UserType.BACKEND,
+
+    }
+  }
+
 
 
   async remove(id: string): Promise<UserDocument> {

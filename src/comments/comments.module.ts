@@ -14,6 +14,7 @@ import { Comments, CommentsSchema } from './schema/comments.schema';
       { name: Comments.name, schema: CommentsSchema },
       { name: Post.name, schema: PostSchema },
       { name: User.name, schema: UserSchema },
+     
     ]),
   ],
   controllers: [CommentsController],

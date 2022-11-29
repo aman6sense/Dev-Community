@@ -21,66 +21,47 @@ export class PostService {
   ) { }
 
   async createPost(createPostDto: CreatePostDto) {
+    const isValidUser = await this.userService.findById(
+      createPostDto.user
+    );
 
-    const newPost = {
-      user: new mongoose.Types.ObjectId(createPostDto.user),
-      title: createPostDto.title,
-      post: createPostDto.post,
-    };
-
-    // const isValidUser = await this.userService.findById(
-    //   newPost.user ? newPost.user : '',
-    // );
-
-    // if (!isValidUser) {
-    //   this.logger.verbose('isValid: ', isValidUser);
-    //   throw new NotFoundException('You not a valid Developer');
-    // }
-
-    const post = await this.postModel.create(newPost);
+    if (!isValidUser) {
+      this.logger.verbose('isValid: ', isValidUser);
+      throw new NotFoundException('You not a valid Developer');
+    }
+    const post = await this.createNewPost(createPostDto);
 
     // push into ElasticSearch
-    if (post) {
-      const postObj = post.toObject();
-      const res = await ElasticSearchHelper.index(IndexNames.posts, postObj);
-      // this.logger.log("insert elastic: ", res)
-    }
-
-
+    // if (post) {
+    //   const postObj = post.toObject();
+    //   const res = await ElasticSearchHelper.index(IndexNames.posts, postObj);
+    //   // this.logger.log("insert elastic: ", res)
+    // }
     return post;
   }
 
   async updatePost(id: string, updatePostDto: UpdatePostDto) {
-
-
     const existPost = await this.postModel.findById(new mongoose.Types.ObjectId(id));
-
     if (!existPost) {
       throw new NotFoundException('Post is not found');
     }
 
-    const newPost = {
-      title: updatePostDto.title,
-      post: updatePostDto.post,
-      tags: [...new Set([...updatePostDto.tags, ...existPost.tags])],
-    };
-    this.logger.verbose('newPost: ', newPost);
+    const postData = this.updatePostDtoImpl(existPost, updatePostDto);
 
-    const updatePost = await this.postModel.findByIdAndUpdate(id, newPost, { new: true });
-
+    const updatePost = await this.updateExistingPost(id, postData);
 
     // push into ElasticSearch
-    if (updatePost) {
+    // if (updatePost) {
 
-      const postObj = updatePost.toObject();
-      const res = await ElasticSearchHelper.index(IndexNames.posts, postObj);
-    }
+    //   const postObj = updatePost.toObject();
+    //   const res = await ElasticSearchHelper.index(IndexNames.posts, postObj);
+    // }
     return updatePost
   }
 
-  async getPostById(id: string) {
+  async getPostById(id: any) {
 
-    // this.logger.verbose("id: ", id)
+    console.log("id: ", id)
     return await this.postModel.findById(id);
   }
 
@@ -184,19 +165,51 @@ export class PostService {
 
   async deletePostWithPostId(id: string, user: User) {
 
-    if (user.userType == UserType.BACKEND || user.userType == UserType.FRONTEND || user.userType == UserType.SQA) {
-
+    if (this.checkUserType(user)) {
       const deletePost = await this.postModel.findByIdAndDelete(id);
-
       // Delete experience from ElasticSearch
-      const res = await ElasticSearchHelper.remove(deletePost.id, IndexNames.posts);
-
+      // const res = await ElasticSearchHelper.remove(deletePost.id, IndexNames.posts);
       return deletePost;
     }
     else {
       throw new UnauthorizedException('User not permitted');
-
     }
   }
 
+  async createNewPost(createPostDto: CreatePostDto) {
+    const postData = this.createPostDtoImpl(createPostDto);
+    return await this.postModel.create(postData);
+  }
+  async updateExistingPost(id: any, postData: UpdatePostDto) {
+    return await this.postModel.findByIdAndUpdate(id, postData, { new: true });
+  }
+
+  createPostDtoImpl(createPostDto: CreatePostDto): {
+    user: mongoose.Types.ObjectId;
+    title: string;
+    post: string;
+  } {
+
+    return {
+      user: new mongoose.Types.ObjectId(createPostDto.user),
+      title: createPostDto.title,
+      post: createPostDto.post,
+    };
+  }
+  updatePostDtoImpl(existPost: Post, updatePostDto: UpdatePostDto): {
+    title: string;
+    post: string;
+    tags: string[];
+  } {
+
+    return {
+      title: updatePostDto.title,
+      post: updatePostDto.post,
+      tags: [...new Set([...updatePostDto.tags, ...existPost.tags])],
+    };
+
+  }
+  async checkUserType(user: any) {
+    return user.userType == UserType.BACKEND || user.userType == UserType.FRONTEND || user.userType == UserType.SQA;
+  }
 }

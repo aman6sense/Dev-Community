@@ -22,51 +22,28 @@ export class ExperienceService {
 
   async addExperience(createExperienceDto: CreateExperienceDto, user: User) {
 
-    if (user.userType == UserType.BACKEND || user.userType == UserType.FRONTEND || user.userType == UserType.SQA) {
-
-
-      const expObj = {
-        user: new mongoose.Types.ObjectId(createExperienceDto.user),
-        CompanyName: createExperienceDto.CompanyName
-          ? createExperienceDto.CompanyName
-          : '',
-        duration: createExperienceDto.duration ? createExperienceDto.duration : 0,
-        description: createExperienceDto.description
-          ? createExperienceDto.description
-          : '',
-      };
-
-      const userId = expObj.user;
-
+    if (this.checkUserType(user)) {
+      const userId = createExperienceDto.user;
       if (!userId) {
         throw new NotFoundException('User is invalid');
       }
-
-      const userExperience = await this.experienceModel.create(expObj);
-
+      const userExperience = await this.addNewExperience(createExperienceDto)
       // push into ElasticSearch
-      if (userExperience) {
-        const experienceObj = userExperience.toObject();
-
-        const res = await ElasticSearchHelper.index(IndexNames.experiences, experienceObj);
-
-        if (!res) {
-          this.logger.log("Not added experience to ElasticSearch")
-        }
-        else {
-          console.log(res);
-        }
-      }
-
+      // if (userExperience) {
+      //   const experienceObj = userExperience.toObject();
+      //   const res = await ElasticSearchHelper.index(IndexNames.experiences, experienceObj);
+      //   if (!res) {
+      //     this.logger.log("Not added experience to ElasticSearch")
+      //   }
+      //   else {
+      //     console.log(res);
+      //   }
+      // }
       return userExperience;
     }
-
     else {
       throw new UnauthorizedException('User not permitted');
-
     }
-
-
   }
 
   async updateDeveloperExperienceById(
@@ -75,88 +52,31 @@ export class ExperienceService {
     user: User
   ) {
 
-    if (user.userType == UserType.BACKEND || user.userType == UserType.FRONTEND || user.userType == UserType.SQA) {
-
-
-      const expObj = {
-
-        CompanyName: updateExperienceDto.CompanyName
-          ? updateExperienceDto.CompanyName
-          : '',
-        duration: updateExperienceDto.duration ? updateExperienceDto.duration : 0,
-        description: updateExperienceDto.description
-          ? updateExperienceDto.description
-          : '',
-      };
-
-      console.log("id: ", userId);
-
-      const updatedUser = await this.experienceModel.findOneAndUpdate(
-        { user: new mongoose.Types.ObjectId(userId) },
-        expObj,
-        { new: true },
-      );
-
+    if (this.checkUserType(user)) {
+      const updatedExperience = await this.updateExperience(updateExperienceDto, userId);
       // push into ElasticSearch
-      if (updatedUser) {
-        const experienceObj = updatedUser.toObject();
-
-        const res = await ElasticSearchHelper.index(IndexNames.experiences, experienceObj);
-
-        if (!res) {
-          this.logger.log("Not added experience to ElasticSearch")
-        }
-        else {
-          console.log(res);
-        }
-      }
-
-
-
-      console.log("update");
-
-      return updatedUser;
+      // if (updatedExperience) {
+      //   const experienceObj = updatedExperience.toObject();
+      //   const res = await ElasticSearchHelper.index(IndexNames.experiences, experienceObj);
+      //   if (!res) {
+      //     this.logger.log("Not added experience to ElasticSearch")
+      //   }
+      //   else {
+      //     console.log(res);
+      //   }
+      // }
+      return updatedExperience;
     }
     else {
       throw new UnauthorizedException('User not permitted');
-
-    }
-
-
-  }
-
-  async getDeveloperExperienceById(userId: string, user: User) {
-
-
-    if (user.userType == UserType.BACKEND || user.userType == UserType.FRONTEND || user.userType == UserType.SQA) {
-
-      return await this.experienceModel.findOne({ user: new mongoose.Types.ObjectId(userId) });
-    }
-    else {
-      throw new UnauthorizedException('User not permitted');
-
     }
   }
 
   async deleteExperienceWithExperienceId(id: string, user: User) {
-
-
-    if (user.userType == UserType.BACKEND || user.userType == UserType.FRONTEND || user.userType == UserType.SQA) {
-
-      this.logger.log("id: ", id);
-
+    if (this.checkUserType(user)) {
       const deleteUser = await this.experienceModel.findByIdAndDelete(id);
-
-      this.logger.log("deleteUser: ", deleteUser);
-
-
-      // Delete experience from ElasticSearch
-      const res = await ElasticSearchHelper.remove(deleteUser.id, IndexNames.experiences);
-
-
-      this.logger.log("deleteUser res: ", res);
-
-
+      // // Delete experience from ElasticSearch
+      // const res = await ElasticSearchHelper.remove(deleteUser.id, IndexNames.experiences);
       return deleteUser;
     }
     else {
@@ -164,10 +84,6 @@ export class ExperienceService {
 
     }
   }
-
-
-
-
   async getExperienceFromElasticSearch(query: SearchExperienceDto) {
 
     const pageSize = parseInt(query.pageSize ?? '200');
@@ -239,12 +155,70 @@ export class ExperienceService {
     };
   }
 
+  async addNewExperience(createExperienceDto: CreateExperienceDto) {
+    const expObj = this.addExperienceImpl(createExperienceDto);
+    return await this.experienceModel.create(expObj);
+  }
+  async updateExperience(updateExperienceDto: UpdateExperienceDto, userId: any) {
+    const expObj = this.updateExperienceImpl(updateExperienceDto);
+    return await this.experienceModel.findOneAndUpdate(
+      { user: new mongoose.Types.ObjectId(userId) },
+      expObj,
+      { new: true },
+    );
+
+  }
+  addExperienceImpl(createExperienceDto: CreateExperienceDto): {
+    user: mongoose.Types.ObjectId;
+    CompanyName: string;
+    duration: number;
+    description: string;
+
+  } {
+    return {
+      user: new mongoose.Types.ObjectId(createExperienceDto.user),
+      CompanyName: createExperienceDto.CompanyName
+        ? createExperienceDto.CompanyName
+        : '',
+      duration: createExperienceDto.duration ? createExperienceDto.duration : 0,
+      description: createExperienceDto.description
+        ? createExperienceDto.description
+        : '',
+    }
+
+  }
 
 
+  updateExperienceImpl(updateExperienceDto: UpdateExperienceDto): {
+    CompanyName: string;
+    duration: number;
+    description: string;
 
+  } {
+    return {
+      CompanyName: updateExperienceDto.CompanyName
+        ? updateExperienceDto.CompanyName
+        : '',
+      duration: updateExperienceDto.duration ? updateExperienceDto.duration : 0,
+      description: updateExperienceDto.description
+        ? updateExperienceDto.description
+        : '',
+    }
 
+  }
 
+  async getDeveloperExperienceById(userId: string, user: User) {
 
+    if (this.checkUserType(user)) {
+      return await this.experienceModel.findOne({ user: new mongoose.Types.ObjectId(userId) });
+    }
+    else {
+      throw new UnauthorizedException('User not permitted');
+    }
+  }
 
+  async checkUserType(user: any) {
+    return user.userType == UserType.BACKEND || user.userType == UserType.FRONTEND || user.userType == UserType.SQA;
+  }
 
 }

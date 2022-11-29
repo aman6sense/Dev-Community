@@ -3,7 +3,7 @@ import {
 } from '@nestjs/common';
 import { AccessTokenGuard } from '../common/guards/accessToken.guard';
 import { SearchUserDto } from './dto/searchUserDto';
-import { updateUserDto } from './dto/updateUserDto';
+import { UpdateUserDto } from './dto/updateUserDto';
 import { UserService } from './user.service';
 
 // @UseGuards(AuthGuard('jwt'))
@@ -47,7 +47,7 @@ export class UserController {
 
   @UseGuards(AccessTokenGuard)
   @Patch('/:id')
-  update(@Param('id') id: string, @Body() updateUserDto: updateUserDto) {
+  update(@Param('id') id: string, @Body() updateUserDto: UpdateUserDto) {
     return this.userService.update(id, updateUserDto);
   }
 

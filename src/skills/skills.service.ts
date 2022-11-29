@@ -21,27 +21,14 @@ export class SkillsService {
 
   async addSkills(addSkillsDto: AddSkillsDto, user: User) {
 
-    if (user.userType == UserType.BACKEND || user.userType == UserType.FRONTEND || user.userType == UserType.SQA) {
-
-      // this.logger.verbose(addSkillsDto);
-
-      const { user, skills } = { ...addSkillsDto };
-
-      const newSkills = {
-        user: new mongoose.Types.ObjectId(addSkillsDto.user),
-        skills: addSkillsDto.skills ? addSkillsDto.skills : []
-      }
-
-      const userSkills = await this.skillsModel.create(newSkills);
-
-
+    if (this.checkUserType(user)) {
+      const userSkills = await this.addNewSkills(addSkillsDto);
       // push into ElasticSearch
-      if (userSkills) {
-        const skillsObj = userSkills.toObject();
-        const res = await ElasticSearchHelper.index(IndexNames.skills, skillsObj);
-        // this.logger.log("insert elastic: ", res)
-      }
-
+      // if (userSkills) {
+      //   const skillsObj = userSkills.toObject();
+      //   const res = await ElasticSearchHelper.index(IndexNames.skills, skillsObj);
+      //   // this.logger.log("insert elastic: ", res)
+      // }
       return userSkills;
     }
     else {
@@ -50,47 +37,29 @@ export class SkillsService {
   }
 
   async updateDeveloperSkillsById(userId: string, updateSkillsDto: UpdateSkillsDto, user: User) {
-    if (user.userType == UserType.BACKEND || user.userType == UserType.FRONTEND || user.userType == UserType.SQA) {
-
-      const updateSkills = {
-        skills: updateSkillsDto.skills ? updateSkillsDto.skills : []
-      }
-
-      const userSkills = await this.skillsModel.findOneAndUpdate(
-        { developer: userId },
-        { $push: { skills: { $each: updateSkills.skills } } },
-      );
-      // console.log("updateUser: ", userSkills);
-
-
+    if (this.checkUserType(user)) {
+      const userSkills = await this.updateExistingSkills(userId, updateSkillsDto);
       // update skills into ElasticSearch
       if (userSkills) {
         const skillsObj = userSkills.toObject();
         const res = await ElasticSearchHelper.index(IndexNames.skills, skillsObj);
         // this.logger.log("update elastic: ", res);
       }
-
       return userSkills;
     }
     else {
       throw new UnauthorizedException('User not permitted');
-
     }
-
   }
 
-
   async getUserSkillsByUserId(userId: any, user: User) {
-    if (user.userType == UserType.BACKEND || user.userType == UserType.FRONTEND || user.userType == UserType.SQA) {
-
-      return await this.skillsModel.findOne({ user: userId });
+    if (this.checkUserType(user)) {
+      return await this.skillsModel.find({ user: new mongoose.Types.ObjectId(userId) });
     }
     else {
       throw new UnauthorizedException('User not permitted');
-
     }
   }
-
 
   async getUsersFromElasticSearch(query: SearchSkillsDto) {
 
@@ -165,7 +134,39 @@ export class SkillsService {
 
 
 
+  async addNewSkills(addSkillsDto: AddSkillsDto) {
+    const newSkills = this.addSkillsDtoImpl(addSkillsDto)
+    return await this.skillsModel.create(newSkills);
+  }
 
+  addSkillsDtoImpl(addSkillsDto: AddSkillsDto): {
+    user: mongoose.Types.ObjectId;
+    skills: string[];
+  } {
+    return {
+      user: new mongoose.Types.ObjectId(addSkillsDto.user),
+      skills: addSkillsDto.skills ? addSkillsDto.skills : []
+    }
+  }
+
+  async updateExistingSkills(userId: any, updateSkillsDto: UpdateSkillsDto) {
+    const updateSkills = this.updateSkillsDtoImpl(updateSkillsDto)
+    return await this.skillsModel.findOneAndUpdate(
+      { user: new mongoose.Types.ObjectId(userId) },
+      { $push: { skills: { $each: updateSkills.skills } } },
+    );
+  }
+
+  updateSkillsDtoImpl(addSkillsDto: AddSkillsDto): {
+    skills: string[];
+  } {
+    return {
+      skills: addSkillsDto.skills ? addSkillsDto.skills : []
+    }
+  }
+  async checkUserType(user: any) {
+    return user.userType == UserType.BACKEND || user.userType == UserType.FRONTEND || user.userType == UserType.SQA;
+  }
 
 
 

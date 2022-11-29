@@ -15,7 +15,7 @@ export class Post {
   post: string;
 
   @Prop({ type: [String], required: [true, 'Tags'] })
-  tags: [string];
+  tags: string[];
 }
 
 export const PostSchema = SchemaFactory.createForClass(Post);

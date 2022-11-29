@@ -21,69 +21,74 @@ export class CommentService {
   ) { }
 
   async addComment(addCommentDot: AddCommentDto, user: any) {
-
-    // this.logger.verbose("=========USER=======", user)
-    console.log("=========USER=======", user)
-    if (user.userType == UserType.BACKEND || user.userType == UserType.FRONTEND || user.userType == UserType.SQA) {
-
-      const postExist = await this.postService.getPostById(addCommentDot?.post?.toString());
+    if (this.checkUserType(user)) {
+      const postId = addCommentDot.post;
+      const postExist = await this.postService.getPostById(postId);
 
       if (!postExist) {
         throw new NotFoundException('post is not exist');
       } else {
 
-        const newComment = {
-          post: new mongoose.Types.ObjectId(addCommentDot.post),
-          comment: addCommentDot.comment ? addCommentDot.comment : "",
-          user: new mongoose.Types.ObjectId(user._id)
-        };
+        const newData = this.postComment(addCommentDot, user)
 
-        const newData = await this.commentsModel.create(newComment);
-
-        // push into ElasticSearch
-        if (newComment) {
-
-          const commentObj = newData.toObject();
-          const res = await ElasticSearchHelper.index(IndexNames.comments, commentObj);
-        }
-
+        // if (newData) {
+        //   const commentObj = newData;
+        //   const res = await ElasticSearchHelper.index(IndexNames.comments, commentObj);
+        // }
         return newData;
       }
 
     } else {
       throw new UnauthorizedException('User not permitted');
-
     }
+  }
+  async postComment(addCommentDot: AddCommentDto, user: User): Promise<any> {
+    const newComment = this.commentImpl(addCommentDot, user);
+    const comment = await this.commentsModel.create(newComment);
+    return comment;
+  }
+
+  commentImpl(addCommentDot: AddCommentDto, user: any): { post: mongoose.Types.ObjectId; comment: string; user: mongoose.Types.ObjectId; } {
+    return {
+      post: new mongoose.Types.ObjectId(addCommentDot.post),
+      comment: addCommentDot.comment ? addCommentDot.comment : "",
+      user: new mongoose.Types.ObjectId(user._id)
+    };
+  }
+
+  async checkUserType(user: any) {
+    return user.userType == UserType.BACKEND || user.userType == UserType.FRONTEND || user.userType == UserType.SQA;
   }
 
   async updateComment(id: string, updateCommentDto: UpdateCommentDto, user: User) {
 
-    if (user.userType == UserType.BACKEND || user.userType == UserType.FRONTEND || user.userType == UserType.SQA) {
-
-      const updateComment = {
-        comment: updateCommentDto.comment ? updateCommentDto.comment : '',
-      };
-
-      const updateData = await this.commentsModel.findByIdAndUpdate(
-        id,
-        updateComment,
-        { new: true, }
-
-      );
+    if (this.checkUserType(user)) {
+      const updateComment = this.updatePostComment(id, updateCommentDto);
       // push into ElasticSearch
-      if (updateData) {
-
-        const commentObj = updateData.toObject();
-        const res = await ElasticSearchHelper.index(IndexNames.comments, commentObj);
-      }
-
-      return updateData;
+      // if (updateComment) {
+      //   const commentObj = updateComment;
+      //   const res = await ElasticSearchHelper.index(IndexNames.comments, commentObj);
+      // }
+      return updateComment;
     }
 
     else {
       throw new UnauthorizedException('User not permitted');
-
     }
+  }
+
+  async updatePostComment(id: string, updateCommentDto: UpdateCommentDto) {
+    const updateData = this.updateCommentImpl(updateCommentDto);
+    return await this.commentsModel.findByIdAndUpdate(
+      id,
+      updateData,
+      { new: true, }
+
+    );
+  }
+
+  updateCommentImpl(updateCommentDto: UpdateCommentDto): { comment: string } {
+    return { comment: updateCommentDto.comment ? updateCommentDto.comment : "" };
   }
 
   async getUserAndPostFromComments(
@@ -92,7 +97,7 @@ export class CommentService {
     count
   ) {
 
-    if (user.userType == UserType.BACKEND || user.userType == UserType.FRONTEND || user.userType == UserType.SQA) {
+    if (this.checkUserType(user)) {
 
       const aggregate = []
       //Populate user from table
@@ -194,12 +199,12 @@ export class CommentService {
 
   async deleteCommentWithCommentId(id: string, user: User) {
 
-    if (user.userType == UserType.BACKEND || user.userType == UserType.FRONTEND || user.userType == UserType.SQA) {
+    if (this.checkUserType(user)) {
 
       const deleteComment = await this.commentsModel.findByIdAndDelete(id);
 
       // Delete comment from ElasticSearch
-      const res = await ElasticSearchHelper.remove(deleteComment.id, IndexNames.comments);
+      // const res = await ElasticSearchHelper.remove(deleteComment.id, IndexNames.comments);
 
       return deleteComment;
     }
